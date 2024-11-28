@@ -21,11 +21,10 @@ def getConfig(params=[], paramsWithDefaultValue=[], checkParametersFunction=None
                 print("Default value will be applied for this parameter")
             else:
                 isConfigValid = False
-    if len(paramsWithDefaultValue) > 0:
-        if checkParametersFunction != None:
-            checkParametersFunction(config)
-        else:
-            print("Error : Unable to check parameters")
+    if checkParametersFunction != None:
+        checkParametersFunction(config)
+    else:
+        print("Error : Unable to check parameters")
 
     if isConfigValid:
         return config
