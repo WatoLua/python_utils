@@ -1,13 +1,6 @@
 from typing import List
 import requests
 import json
-from elasticsearch import Elasticsearch
-
-import sys
-sys.path.append('C:/Users/mathi/Desktop/informatique/python/utils')
-sys.path.append('C:/Users/XTFP190/OneDrive - LA POSTE GROUPE/Documents/python/utils')
-
-import jsonUtils
 
 class ElasticClient:
     url: List[str] = []
