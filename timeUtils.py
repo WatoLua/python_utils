@@ -19,13 +19,8 @@ def waitDate(dateStr: str):
 
     # Vérifier si la date cible est dans le passé
     if remainingTime < 0:
-        print(f"La date cible {dateStr} est déjà passée.")
         return
-
-    print(f"Temps à attendre : {remainingTime} secondes.")
 
     # Attendre pendant le temps restant
     time.sleep(remainingTime)
-
-    print(f"Date cible atteinte : {dateStr}")
 
