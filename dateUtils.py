@@ -24,5 +24,7 @@ def removeTimezoneAndParseDate(dateStr, outputFormat) -> str:
     return date.strftime(outputFormat)
 
 
-def getFormattedDateNow(format="%Y-%m-%dT%H:%M:%S.f"):
-    return datetime.date.today().strftime(format)
+def getFormattedDateNow(format="%Y-%m-%dT%H:%M:%S.f", timezone: str = None):
+    if timezone != None:
+        return datetime.datetime.now(pytz.timezone(timezone)).strftime(format)
+    return datetime.datetime.now().strftime(format)

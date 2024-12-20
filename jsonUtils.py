@@ -1,4 +1,4 @@
-
+from jsonpath_ng.ext import parse
 
 ## json ##
 
@@ -29,3 +29,9 @@ def getJsonValueOrDefault(jsonObject, path, defaultValue):
     except Exception as error:
         # print(error)
         return defaultValue
+
+def getJsonValue(jsonObject, path):
+    return parse(path).find(jsonObject)[0].value
+
+def getJsonValues(jsonObject, path):
+    return [match.value for match in parse(path).find(jsonObject)]
