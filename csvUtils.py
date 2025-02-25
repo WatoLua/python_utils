@@ -19,7 +19,7 @@ class CsvReader:
         self.csvName = filePath.split("/")[-1].replace(".csv", "")
         self.actualRow = 0
         self.lastRow = self.csv.shape[0]
-        if self.header is not None:
+        if header is not None:
             self.header = self.csv.columns.str.strip().tolist()
 
 
