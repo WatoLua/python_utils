@@ -10,10 +10,11 @@ def argmin(numberList):
     return min_index
 
 def getMinExcludingIndice(vector, indice):
-    minValue = vector[0] + vector[1]
+    minValue = vector[0] + vector[1] + 1 if len(vector) > 1 else vector[0] + 1
     minJ = -1
     for j in range(0, len(vector)):
+        value = vector[j]
         if indice != j and vector[j] < minValue:
             minValue = vector[j]
             minJ = j
-    return j
+    return minJ
