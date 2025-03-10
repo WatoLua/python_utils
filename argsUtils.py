@@ -1,6 +1,6 @@
 import sys
 
-def getConfig(params=[], paramsWithDefaultValue=[], checkParametersFunction=None):
+def getConfig(params=[], paramsWithDefaultValue=[], checkParameters=True, checkParametersFunction=None):
     """
     Get configuration data from the command line arguments.
 
@@ -16,18 +16,21 @@ def getConfig(params=[], paramsWithDefaultValue=[], checkParametersFunction=None
     isConfigValid = True
     for param in params:
         if param not in config:
-            print(f"Error : missing parameter {param}")
+            print(f"Missing parameter {param}")
             if param in paramsWithDefaultValue:
                 print("Default value will be applied for this parameter")
             else:
                 isConfigValid = False
-    if checkParametersFunction != None:
-        checkParametersFunction(config)
-    else:
-        print("Error : Unable to check parameters")
 
-    if isConfigValid:
-        return config
-    else:
+    if not isConfigValid:
         print(f"List of required parameters : {params}")
         sys.exit(1)
+    if checkParametersFunction != None:
+        isConfigValid = checkParametersFunction(config)
+        if not isConfigValid:
+            print(f"Parameters are not valid.")
+            sys.exit(1)
+    elif checkParameters:
+        print("Error : Unable to check parameters.")
+
+    return config
