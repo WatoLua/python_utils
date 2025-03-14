@@ -44,7 +44,7 @@ def writeToFileModded(path, content="", mode="w", retry=0):
                 file.write(content)
             return
         except:
-            print("retry")
+            print("retry to write in " + path)
             time.sleep(min(retry, 60 * 10))
             retry *= 2
 

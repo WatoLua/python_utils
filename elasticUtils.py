@@ -1,6 +1,7 @@
 from typing import List
 import requests
 import json
+from elasticsearch import Elasticsearch
 
 class ElasticClient:
     url: List[str] = []
