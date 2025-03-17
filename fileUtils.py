@@ -49,15 +49,15 @@ def writeToFileModded(path, content="", mode="w", retry=0):
             retry *= 2
 
 
-def addAllToFile(path, content=[], retry=0):
+def addAllToFile(path, content=[], endLineCharacter="\n", retry=0):
     if content == None:
         return
     while True:
         try:
             with open(path, 'a', encoding="utf-8", opener=opener) as file:
                 for line in content:
-                    if not line.endswith("\n"):
-                        line += "\n"
+                    if not line.endswith(endLineCharacter):
+                        line += endLineCharacter
                     file.write(line)
             return
         except:
