@@ -1,9 +1,11 @@
+from symtable import Function
 from typing import List
 import requests
 import json
 from elasticsearch import Elasticsearch
+import loggingUtils
 
-class ElasticClient:
+class ElasticClientHTTP:
     url: List[str] = []
     debug: bool
 
@@ -54,3 +56,92 @@ class ElasticClient:
             for url in self.urls:
                 pass
 
+class ElasticClient:
+    def __init__(self, hosts: list[str]):
+        """
+        # Initialisation du processeur de donnees
+        # Connexion a ES et parametrage des fichiers
+        """
+        self.es_client = Elasticsearch(hosts)
+        self.pit_keep_alive = "20m"
+        self.logger = loggingUtils.getLogger(__file__)
+        self.usePit = False
+
+    def create_pit(self, index: str) -> str:
+        """
+        # Creation du Point in Time pour la recherche
+        """
+        try:
+            pit_response = self.es_client.open_point_in_time(
+                index=index,
+                keep_alive=self.pit_keep_alive
+            )
+            return pit_response['id']
+        except Exception as e:
+            self.logger.error(f"Erreur lors de la creation du PIT: {e}")
+            raise
+
+    def forQuery(self, queryConfObject):
+        self.queryConf = queryConfObject.copy()
+        return self
+
+    def shouldUsePit(self, usePit):
+        self.usePit = usePit
+        return self
+
+    def execute(self, callbackFunction, **kwargs) -> any:
+        """
+        # Traitement des documents avec  ou sans PIT
+        """
+        self.logger.info(f"Search using Pit is set to {self.usePit}")
+
+        pit_id = None
+        if self.usePit:
+            pit_id = self.create_pit(self.queryConf["index"])
+        search_after = None
+        total_processed = 0
+        page = 0
+        try:
+            while True:
+                page += 1
+                query = self.queryConf["query"]
+                if search_after:
+                    query["search_after"] = search_after
+
+                if self.usePit:
+                    # Ajout du PIT dans le body de la requete
+                    query.update({"pit": {"id": pit_id, "keep_alive": self.pit_keep_alive}})
+                response = self.es_client.search(
+                    body=query,
+                    index=self.queryConf["index"]
+                )
+                hits = response["hits"]["hits"]
+                self.logger.info(f"Nombre de documents trouves : {len(hits)}, page={page}")
+                if not hits:
+                    break
+
+                for hit in hits:
+                    source = hit["_source"]
+                    try:
+                        total_processed += 1
+                        callbackFunction(source, total_processed, **kwargs)
+
+                    except (ValueError, KeyError) as e:
+                        self.logger.warning(f"Erreur de traitement du document {source.get(self.queryConf.fields[0])}: {e}")
+                        continue
+
+                self.logger.info(f"Nombre total de documents traites: {total_processed}")
+                if self.usePit:
+                    # Mise a jour du search_after pour la pagination
+                    search_after = hits[-1]["sort"]
+
+        finally:
+            if self.usePit:
+                # Nettoyage du PIT
+                try:
+                    self.es_client.close_point_in_time(body={"id": pit_id})
+                except Exception as e:
+                    self.logger.error(f"Erreur lors de la suppression du PIT: {e}")
+
+def callbackFuncPrint(doc, count, **kwargs):
+    print(count, doc)

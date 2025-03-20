@@ -50,7 +50,7 @@ def writeToFileModded(path, content="", mode="w", retry=0):
 
 
 def addAllToFile(path, content=[], endLineCharacter="\n", retry=0):
-    if content == None:
+    if content == None or content == []:
         return
     while True:
         try:
