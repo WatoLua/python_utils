@@ -5,12 +5,12 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
 
-def getLogger(forFilePath, pathSeparator = "\\"):
+def getLogger(forFilePath, pathSeparator = "/"):
+    print(f"logging in {forFilePath.replace("\\", pathSeparator)}") 
     logging.basicConfig(
         filename=f'{forFilePath}.log',
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
-    return logging.getLogger(forFilePath.split(pathSeparator)[-1])
+    return logging.getLogger(forFilePath.replace("\\", pathSeparator))

@@ -57,14 +57,14 @@ class ElasticClientHTTP:
                 pass
 
 class ElasticClient:
-    def __init__(self, hosts: list[str]):
+    def __init__(self, hosts: list[str], logger=loggingUtils.getLogger(__file__)):
         """
         # Initialisation du processeur de donnees
         # Connexion a ES et parametrage des fichiers
         """
         self.es_client = Elasticsearch(hosts)
         self.pit_keep_alive = "20m"
-        self.logger = loggingUtils.getLogger(__file__)
+        self.logger = logger
         self.usePit = False
 
     def create_pit(self, index: str) -> str:
@@ -134,6 +134,8 @@ class ElasticClient:
                 if self.usePit:
                     # Mise a jour du search_after pour la pagination
                     search_after = hits[-1]["sort"]
+                else:
+                    break
 
         finally:
             if self.usePit:
