@@ -22,6 +22,21 @@ class CsvReader:
         if header is not None:
             self.header = self.csv.columns.str.strip().tolist()
 
+    def nextRow(self):
+        if self.actualRow < self.lastRow:
+            row = self.csv.iloc[self.actualRow].to_list()
+            self.actualRow += 1
+            return row
+        else:
+            return None
+    def hasNextRow(self):
+        return self.actualRow < self.lastRow
+
+    def columnValue(self, row, header):
+        try:
+            return row[self.header.index(header)]
+        except:
+            return None
 
 class CsvProcessor:
     def __init__(self, csvReader, module, linesToProcess = 100, moduleProcessMode="all"):

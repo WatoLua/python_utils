@@ -2,6 +2,10 @@ import json
 from urllib.parse import urlparse
 import requests
 
+def ignoreWarnings():
+    import urllib3
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 def extract_host(url: str) -> str:
     parsed_url = urlparse(url)
     return parsed_url.netloc  # Renvoie le host (nom de domaine ou IP avec port)
