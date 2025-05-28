@@ -35,11 +35,11 @@ class ElasticClientHTTP:
         if self.debug:
             print(f"call {url + endpoint} with method {method.upper()}")
             print(f"body = {json.dumps(body)}")
-        if body == None:
+        if body is None:
             response = requestFunction[method.upper()](url + endpoint, verify=False)
         else:
             response = requestFunction[method.upper()](url + endpoint, json=body,
-                                                       headers={"Content-Type": "application/json"}, verify=False)
+                headers={"Content-Type": "application/json"}, verify=False)
 
         if response.status_code != 200:
             print(f"Got error when requested Elastic search with code {response.status_code}")
@@ -53,6 +53,8 @@ class ElasticClientHTTP:
         if len(self.urls) == 1:
             return self.urls[0]
         else:
+            #not yet implemented
+            return self.urls[0]
             for url in self.urls:
                 pass
 

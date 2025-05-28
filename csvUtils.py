@@ -29,6 +29,7 @@ class CsvReader:
             return row
         else:
             return None
+
     def hasNextRow(self):
         return self.actualRow < self.lastRow
 
@@ -46,6 +47,15 @@ class CsvProcessor:
         self.moduleProcessMode = moduleProcessMode
 
     def processCsv(self, threadsNumber = 4, progressFunc=printUtils.printProgressBar):
+        if (threadsNumber == 1 and self.moduleProcessMode == "each" and self.linesToProcess == 1):
+            self.processSequential(progressFunc)
+        else:
+            self.processParallel(threadsNumber, progressFunc)
+
+        if progressFunc is not None:
+            print()
+
+    def processParallel(self, threadsNumber = 4, progressFunc=printUtils.printProgressBar):
         """
         Starts the first X threads.
         """
@@ -77,10 +87,19 @@ class CsvProcessor:
         for thread in threads:
             thread.join()
 
+    def processSequential(self, progressFunc=printUtils.printProgressBar):
+        if progressFunc is not None:
+            progressFunc(self.csvReader.actualRow, self.csvReader.lastRow, self.csvReader.sizeProgress)
+        while self.csvReader.hasNextRow():
+            self.module.process(self.csvReader.nextRow())
+            if progressFunc is not None:
+                progressFunc(self.csvReader.actualRow, self.csvReader.lastRow, self.csvReader.sizeProgress)
+
+
     def collectRows(self):
         rows = []
         for i in range(self.linesToProcess):
-            if (self.csvReader.actualRow + i < self.csvReader.lastRow):
+            if self.csvReader.actualRow + i < self.csvReader.lastRow:
                 rowValues = self.csvReader.csv.iloc[self.csvReader.actualRow + i].to_list()
                 rows.append(rowValues)
         return rows
