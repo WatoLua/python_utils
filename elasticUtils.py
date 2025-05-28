@@ -111,9 +111,14 @@ class ElasticClient:
                 if self.usePit:
                     # Ajout du PIT dans le body de la requete
                     query.update({"pit": {"id": pit_id, "keep_alive": self.pit_keep_alive}})
-                response = self.es_client.search(
+                response =(
+                    self.es_client.search(
                     body=query,
-                    index=self.queryConf["index"]
+                )) \
+                    if self.usePit \
+                    else self.es_client.search(
+                    body=query,
+                    index=self.queryConf["index"],
                 )
                 hits = response["hits"]["hits"]
                 self.logger.info(f"Nombre de documents trouves : {len(hits)}, page={page}")
@@ -127,7 +132,7 @@ class ElasticClient:
                         callbackFunction(source, total_processed, **kwargs)
 
                     except (ValueError, KeyError) as e:
-                        self.logger.warning(f"Erreur de traitement du document {source.get(self.queryConf.fields[0])}: {e}")
+                        self.logger.warning(f"Erreur de traitement du document {source}: {e}")
                         continue
 
                 self.logger.info(f"Nombre total de documents traites: {total_processed}")

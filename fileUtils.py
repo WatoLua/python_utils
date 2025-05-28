@@ -7,13 +7,11 @@ import os
 
 os.umask(0)
 
-
 def opener(path, flags):
     return os.open(path, flags, 0o777)
 
-
 def parseJson(path) -> any:
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         data = json.load(file)
     return data
 
@@ -74,7 +72,7 @@ def getFileLinesCount(path) -> int:
 
 def getFileContent(path) -> str:
     content = ""
-    with open(path, "r") as file:
+    with open(path, "r", encoding="utf-8") as file:
         content = "".join(file.readlines())
     return content
 
