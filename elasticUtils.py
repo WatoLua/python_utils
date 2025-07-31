@@ -59,7 +59,7 @@ class ElasticClientHTTP:
                 pass
 
 class ElasticClient:
-    def __init__(self, hosts: list[str], logger=loggingUtils.getLogger(__file__)):
+    def __init__(self, hosts: list[str], logger=loggingUtils.getDefaultLogger()):
         """
         # Initialisation du processeur de donnees
         # Connexion a ES et parametrage des fichiers
@@ -128,13 +128,12 @@ class ElasticClient:
                     break
 
                 for hit in hits:
-                    source = hit["_source"]
                     try:
                         total_processed += 1
-                        callbackFunction(source, total_processed, **kwargs)
+                        callbackFunction(hit, total_processed, **kwargs)
 
                     except (ValueError, KeyError) as e:
-                        self.logger.warning(f"Erreur de traitement du document {source}: {e}")
+                        self.logger.warning(f"Erreur de traitement du document {hit}: {e}")
                         continue
 
                 self.logger.info(f"Nombre total de documents traites: {total_processed}")
@@ -151,6 +150,7 @@ class ElasticClient:
                     self.es_client.close_point_in_time(body={"id": pit_id})
                 except Exception as e:
                     self.logger.error(f"Erreur lors de la suppression du PIT: {e}")
+        return total_processed
 
 def callbackFuncPrint(doc, count, **kwargs):
     print(count, doc)

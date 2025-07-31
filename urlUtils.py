@@ -10,7 +10,7 @@ def extract_host(url: str) -> str:
     parsed_url = urlparse(url)
     return parsed_url.netloc  # Renvoie le host (nom de domaine ou IP avec port)
 
-def fetchWithJson(method, url, body=None):
+def fetchWithJson(method, url, body=None, printErrors = True):
     requestFunction = {
         "GET": requests.get,
         "POST": requests.post,
@@ -28,7 +28,8 @@ def fetchWithJson(method, url, body=None):
             headers={"Content-Type": "application/json"}, verify=False)
 
     if response.status_code != 200:
-        print(f"Got error when requested {url} : {response.status_code}")
+        if printErrors:
+            print(f"Got error when requested {url} : {response.status_code}")
         return None
     else:
         return json.loads(response.text)

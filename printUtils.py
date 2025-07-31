@@ -32,13 +32,12 @@ def printProgress(actualProgress, maxValue, sizeBar):
     Print a progress with values
     """
 
-    progress = int(actualProgress * 100 / maxValue)
+    progress = int(actualProgress * sizeBar / maxValue)
 
     if utilsVars["progressPourcent"] != progress:
         utilsVars["progressPourcent"] = progress
-        progress = int(actualProgress * sizeBar / maxValue)
         sys.stdout.write(f"{actualProgress}/{maxValue}\n")
         sys.stdout.flush()
 
-    if utilsVars["progressPourcent"] == 100:
+    if utilsVars["progressPourcent"] == sizeBar:
         utilsVars["progressPourcent"] = -1
