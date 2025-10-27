@@ -123,6 +123,8 @@ class ElasticClient:
                     index=self.queryConf["index"],
                 )
                 hits = response["hits"]["hits"]
+                if page == 1:
+                    self.logger.info(f"Nombre total de documents : {response['hits']['total']['value']}")
                 self.logger.info(f"Nombre de documents trouves : {len(hits)}, page={page}")
                 if not hits:
                     break
@@ -138,11 +140,13 @@ class ElasticClient:
 
                 self.logger.info(f"Nombre total de documents traites: {total_processed}")
                 if self.usePit:
-                    # Mise a jour du search_after pour la pagination
-                    search_after = hits[-1]["sort"]
+                    if "sort" in self.queryConf["query"]:
+                        # Mise a jour du search_after pour la pagination
+                        search_after = hits[-1]["sort"]
+                    else:
+                        self.queryConf["query"]["from"] = page * self.queryConf["query"]["size"]
                 else:
                     break
-
         finally:
             if self.usePit:
                 # Nettoyage du PIT
