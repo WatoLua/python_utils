@@ -143,8 +143,6 @@ class ElasticClient:
                     if "sort" in self.queryConf["query"]:
                         # Mise a jour du search_after pour la pagination
                         search_after = hits[-1]["sort"]
-                    else:
-                        self.queryConf["query"]["from"] = page * self.queryConf["query"]["size"]
                 else:
                     break
         finally:
