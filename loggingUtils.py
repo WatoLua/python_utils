@@ -1,5 +1,6 @@
 import logging
 import sys
+import atexit
 
 logging.basicConfig(
     filename=f'out.log',
@@ -34,3 +35,14 @@ def getLogger(forFilePath, pathSeparator = "/"):
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
     return logging.getLogger(forFilePath.replace("\\", pathSeparator))
+
+def closeAllLoggers():
+    """Close all loggers and remove all handlers."""
+    print("closing all loggers")
+    for logger in _localLogging.values():
+        for handler in logger.handlers:
+            handler.close()
+            logger.removeHandler(handler)
+    _localLogging.clear()
+
+atexit.register(closeAllLoggers)

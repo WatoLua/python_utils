@@ -145,6 +145,8 @@ class ElasticClient:
                         search_after = hits[-1]["sort"]
                 else:
                     break
+        except e:
+            self.logger.error(f"Erreur lors du traitement: {e}")
         finally:
             if self.usePit:
                 # Nettoyage du PIT
