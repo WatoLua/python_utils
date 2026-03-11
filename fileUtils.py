@@ -2,6 +2,7 @@ import json
 import time
 from typing import List
 import os
+from pathlib import Path
 
 ## file I/O ##
 
@@ -94,3 +95,9 @@ def safeDelete(path) -> bool:
             pass
 
     return not os.path.exists(path)
+
+def ensure_dir_path(dir_path):
+    """Create all directories up to the lowest subfolder for dir_path."""
+    if not dir_path:
+        raise ValueError("dir_path must be a non-empty path")
+    Path(dir_path).mkdir(parents=True, exist_ok=True)

@@ -1,3 +1,4 @@
+import csv
 import threading
 import pandas
 
@@ -14,7 +15,15 @@ class CsvReader:
         self.header = []
         self.csvName = ""
 
-    def readCsv(self, filePath, separator, header=0):
+    def scan_csv_separator(self, filePath):
+        with open(filePath) as f:
+            sample = f.readline()
+            dialect = csv.Sniffer().sniff(sample)
+            return dialect.delimiter
+
+    def readCsv(self, filePath, separator=None, header=0):
+        if separator is None:
+            separator = self.scan_csv_separator(filePath)
         self.csv = pandas.read_csv(filePath, sep=f"[{separator}]", engine="python", header=header)
         self.csvName = filePath.split("/")[-1].replace(".csv", "")
         self.actualRow = 0

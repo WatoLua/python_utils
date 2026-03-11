@@ -5,6 +5,12 @@ import json
 from elasticsearch import Elasticsearch
 import loggingUtils
 
+def cycle_from_to(from_, to):
+    n = from_
+    while True:
+        yield n
+        n = (n + 1) % to
+
 class ElasticClientHTTP:
     url: List[str] = []
     debug: bool
@@ -12,12 +18,13 @@ class ElasticClientHTTP:
     def __init__(self, urls, debug=False) -> None:
         self.urls = urls
         self.debug = debug
+        self.index_url = cycle_from_to(0, len(self.urls))
 
     def exec(self, method: str, endpoint, body=None) -> any:
         return self.runRequest(self.__selectNode(), method, endpoint, body)
 
     def runRequest(self, url: str, method: str, endpoint, body=None) -> any:
-        if url.endswith("/") and not endpoint.startswith("/"):
+        if url.endswith("/") and endpoint.startswith("/"):
             endpoint = endpoint[1:]
         if not url.endswith("/") and not endpoint.startswith("/"):
             endpoint = "/" + endpoint
@@ -53,21 +60,21 @@ class ElasticClientHTTP:
         if len(self.urls) == 1:
             return self.urls[0]
         else:
-            #not yet implemented
-            return self.urls[0]
-            for url in self.urls:
-                pass
+            return self.urls[next(self.index_url)]
 
 class ElasticClient:
-    def __init__(self, hosts: list[str], logger=loggingUtils.getDefaultLogger()):
+    def __init__(self, hosts: list[str], logger=loggingUtils.getDefaultLogger(), keepAlive="20m"):
         """
         # Initialisation du processeur de donnees
         # Connexion a ES et parametrage des fichiers
         """
         self.es_client = Elasticsearch(hosts)
-        self.pit_keep_alive = "20m"
+        self.pit_keep_alive = keepAlive
         self.logger = logger
         self.usePit = False
+        self.total_hits = -1
+        self.threshold_hits = -1
+        self.max_hits_to_process = -1
 
     def create_pit(self, index: str) -> str:
         """
@@ -91,6 +98,15 @@ class ElasticClient:
         self.usePit = usePit
         return self
 
+    def add_default_sort_if_missing(self):
+        if "sort" not in self.queryConf["query"]:
+            self.queryConf["query"]["sort"] = [{ "_shard_doc": "asc" }]
+        return self
+
+    def cut_search_at(self, max_hits_to_process):
+        self.max_hits_to_process = max_hits_to_process
+        return self
+
     def execute(self, callbackFunction, **kwargs) -> any:
         """
         # Traitement des documents avec  ou sans PIT
@@ -101,10 +117,11 @@ class ElasticClient:
         if self.usePit:
             pit_id = self.create_pit(self.queryConf["index"])
         search_after = None
-        total_processed = 0
+        self.threshold_hits = 0
         page = 0
         try:
-            while True:
+            continue_search = True
+            while continue_search:
                 page += 1
                 query = self.queryConf["query"]
                 if search_after:
@@ -124,37 +141,43 @@ class ElasticClient:
                 )
                 hits = response["hits"]["hits"]
                 if page == 1:
-                    self.logger.info(f"Nombre total de documents : {response['hits']['total']['value']}")
+                    self.total_hits = response['hits']['total']['value']
+                    self.logger.info(f"Nombre total de documents : {self.total_hits}")
                 self.logger.info(f"Nombre de documents trouves : {len(hits)}, page={page}")
                 if not hits:
                     break
 
                 for hit in hits:
                     try:
-                        total_processed += 1
-                        callbackFunction(hit, total_processed, **kwargs)
+                        if self.max_hits_to_process != -1 and self.threshold_hits >= self.max_hits_to_process:
+                            continue_search = False
+                            break
+                        self.threshold_hits += 1
+                        callbackFunction(hit, self.threshold_hits, **kwargs)
 
                     except (ValueError, KeyError) as e:
-                        self.logger.warning(f"Erreur de traitement du document {hit}: {e}")
+                        self.logger.exception(f"Erreur de traitement du document {hit}: {e}")
                         continue
 
-                self.logger.info(f"Nombre total de documents traites: {total_processed}")
+                self.logger.info(f"Nombre total de documents traites: {self.threshold_hits}")
                 if self.usePit:
                     if "sort" in self.queryConf["query"]:
                         # Mise a jour du search_after pour la pagination
                         search_after = hits[-1]["sort"]
+                    else:
+                        self.logger.error("La recherche ne contient pas de sort, la pagination ne fonctionnera pas.\n Utiliser add_default_sort_if_missing() pour un trie par défault")
                 else:
                     break
-        except e:
-            self.logger.error(f"Erreur lors du traitement: {e}")
+        except Exception as e:
+            self.logger.exception(f"Erreur lors du traitement: {e}")
         finally:
             if self.usePit:
                 # Nettoyage du PIT
                 try:
                     self.es_client.close_point_in_time(body={"id": pit_id})
                 except Exception as e:
-                    self.logger.error(f"Erreur lors de la suppression du PIT: {e}")
-        return total_processed
+                    self.logger.exception(f"Erreur lors de la suppression du PIT: {e}")
+        return self.threshold_hits
 
 def callbackFuncPrint(doc, count, **kwargs):
     print(count, doc)

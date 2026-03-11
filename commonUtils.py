@@ -50,3 +50,45 @@ def normalize_string(value):
     normalized = normalized.strip('_')
 
     return normalized
+
+def cycle_from_to(from_, to):
+    n = from_
+    while True:
+        yield n
+        n = (n + 1) % to
+
+def deep_getsizeof(obj, seen=None):
+    """Approximate memory footprint of an object and its contents."""
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    seen.add(obj_id)
+
+    size = sys.getsizeof(obj)
+
+    if isinstance(obj, dict):
+        size += sum(
+            deep_getsizeof(k, seen) + deep_getsizeof(v, seen)
+            for k, v in obj.items()
+        )
+    elif isinstance(obj, (list, tuple, set, frozenset)):
+        size += sum(deep_getsizeof(i, seen) for i in obj)
+
+    return size
+
+def print_sizeof(data=None, sizeof=None):
+    if data is None and sizeof is None:
+        print("You must provide either data or sizeof.")
+
+    if data is not None:
+        sizeof_ = deep_getsizeof(data)
+        print_sizeof(sizeof=sizeof_)
+
+    if sizeof is not None:
+        print(sizeof * 8, "b")
+        print(sizeof, "B")
+        print(round(sizeof / 1024, 2), "KiB")
+        print(round(sizeof / 1024 ** 2, 2), "MiB")
+        print(round(sizeof / 1024 ** 3, 2), "GiB")
