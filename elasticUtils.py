@@ -88,7 +88,7 @@ class ElasticClient:
             return pit_response['id']
         except Exception as e:
             self.logger.error(f"Erreur lors de la creation du PIT: {e}")
-            raise
+            raise e
 
     def forQuery(self, queryConfObject):
         self.queryConf = queryConfObject.copy()
@@ -114,12 +114,12 @@ class ElasticClient:
         self.logger.info(f"Search using Pit is set to {self.usePit}")
 
         pit_id = None
-        if self.usePit:
-            pit_id = self.create_pit(self.queryConf["index"])
         search_after = None
         self.threshold_hits = 0
         page = 0
         try:
+            if self.usePit:
+                pit_id = self.create_pit(self.queryConf["index"])
             continue_search = True
             while continue_search:
                 page += 1
@@ -170,14 +170,16 @@ class ElasticClient:
                     break
         except Exception as e:
             self.logger.exception(f"Erreur lors du traitement: {e}")
+            return self.threshold_hits, e
         finally:
-            if self.usePit:
+            if self.usePit and pit_id is not None:
                 # Nettoyage du PIT
                 try:
+                    self.logger.info("Suppression du PIT...")
                     self.es_client.close_point_in_time(body={"id": pit_id})
                 except Exception as e:
                     self.logger.exception(f"Erreur lors de la suppression du PIT: {e}")
-        return self.threshold_hits
+        return self.threshold_hits, None
 
 def callbackFuncPrint(doc, count, **kwargs):
     print(count, doc)
