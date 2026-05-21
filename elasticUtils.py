@@ -68,6 +68,7 @@ class ElasticClient:
         # Initialisation du processeur de donnees
         # Connexion a ES et parametrage des fichiers
         """
+        self.hosts = hosts
         self.es_client = Elasticsearch(hosts)
         self.pit_keep_alive = keepAlive
         self.logger = logger
@@ -75,6 +76,19 @@ class ElasticClient:
         self.total_hits = -1
         self.threshold_hits = -1
         self.max_hits_to_process = -1
+
+    def login(self, user: str, password: str, verify_ssl: bool = True):
+        """
+        # Authentification pour Elasticsearch v8+
+        # A appeler apres __init__ si le cluster requiert une authentification
+        """
+        self.es_client = Elasticsearch(
+            self.hosts,
+            basic_auth=(user, password),
+            verify_certs=verify_ssl,
+            ssl_show_warn=verify_ssl,
+        )
+        return self
 
     def create_pit(self, index: str) -> str:
         """
